@@ -60,3 +60,29 @@ kimi_templates = {
     "longdialogue_qa_eng": "Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is. Give me the answer using the name before the colons, don't say anything else.\n\n{context}",  # noqa
 }
 
+LLAMA3_SYSTEM_PRM = """<|start_header_id|>system<|end_header_id|>
+
+Cutting Knowledge Date: December 2023
+Today Date: 26 Jul 2024
+
+<|eot_id|>"""
+LLAMA3_USER_PRM = """<|start_header_id|>user<|end_header_id|>\n\n"""
+LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"""
+
+llama3_templates = {
+    "longbook_qa_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Read the book below and answer a question.\n\nQuestion: {{question}}\n\nBe very concise." + "{context}" + f"{LLAMA3_USER_END}",  # noqa
+    "longbook_sum_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Summarize the book below:\n\n" + "{context}" + f"{LLAMA3_USER_END}",  # noqa
+    
+    # TODO: LOL...
+    "passkey": "There is an important info hidden inside a lot of irrelevant text. Find it and memorize them. I will quiz you about the important information there.\n\n{context}\n{input}\nThe pass key is",  # noqa
+    "number_string": "There is an important info hidden inside a lot of irrelevant text. Find it. I will quiz you about the important information there.\n\n{context}\n{input}\nThe sequence of digits is",  # noqa
+    "kv_retrieval": "Extract the value corresponding to the specified key in the JSON object below.\n\n{context}\n{input}",  # noqa
+    "longbook_choice_eng": "Read the book and answer the question.\n\nQuestion: {question}\n\nOnly one of the following options is correct, tell me the answer using one single letter (A, B, C, or D). Don't say anything else.\nA. {OPTION_A}\nB. {OPTION_B}\nC. {OPTION_C}\nD. {OPTION_D}" + "{file:{document}}",  # noqa
+    "longbook_qa_chn": "阅读以下书籍然后回答问题。\n\n问题：{question}\n答案：" + "{file:{context}}",  # noqa
+    "math_find": "{prefix}\n\n{context}\n\n{input}",
+    "math_calc": "Let us calculate the intermediate values of an expression.\nExpression: 1 + 3 + 4\nValues: [1, 4, 8]\n\nExpression: 8 - 3 + 2 - 4\nValues: [8, 5, 7, 3]\n\nExpression: {context}\nValues:",  # noqa
+    "code_run": "In the file functions_module.py, there is a function called ${func}.\n\n\nHere is the content of functions_module.py:\n\nPlease give me the exact number of the return value of ${func_call}. Your response should end with the sentence 'The return value is:'." + "{context}",  # noqa
+    "code_debug": "Below is a code repository where there is one single function with bugs that causes an error. Please tell me the name of that function.\nWhich function has bugs? Give me the final answer in this format: \"[FINAL ANSWER: XXX]\". Don't say anything else." + "{fcontext}",  # noqa
+    # "longdialogue_qa_eng": "Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is.\n\nThe name that has been replaced with $$MASK$$ is likely" + "{context}",  # noqa
+    "longdialogue_qa_eng": "Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is. Give me the answer using the name before the colons, don't say anything else.\n\n{context}",  # noqa
+}

@@ -447,5 +447,8 @@ if __name__ == "__main__":
     for task in tasks:
         result_dir = Path(args.output_dir, args.model_name)
         preds_path = result_dir / f"preds_{task}.jsonl"
-        assert preds_path.exists(), f"Predictions not found in: {preds_path}"
-        compute_scores(preds_path, task, args.model_name)
+        if preds_path.exists():
+            assert preds_path.exists(), f"Predictions not found in: {preds_path}"
+            compute_scores(preds_path, task, args.model_name)
+        else:
+            print('WARN', preds_path, 'not found')

@@ -16,6 +16,7 @@ from prompt import (
     kimi_templates,
     claude2_templates,
     yarn_mistral_templates,
+    llama3_templates,
 )
 
 DATA_NAME_TO_PATH = {
@@ -61,6 +62,7 @@ MODEL_TO_PROMPT_TEMPLATE = {
     "yi-6b-200k": yarn_mistral_templates,
     "yi-34b-200k": yarn_mistral_templates,
     "chatglm3": yarn_mistral_templates,
+    "llama3": llama3_templates,
 }
 
 
@@ -263,6 +265,9 @@ def create_prompt(eg: dict, data_name: str, model_name: Optional[str], data_dir)
     # Directly use the appropriate template if the model_name is provided.
     if model_name and model_name in MODEL_TO_PROMPT_TEMPLATE:
         templates = MODEL_TO_PROMPT_TEMPLATE[model_name]
+        template = templates[data_name]
+    elif model_name and 'llama3' in model_name:
+        templates = MODEL_TO_PROMPT_TEMPLATE['llama3']
         template = templates[data_name]
     else:
         # If no model-specific template, return a basic prompt or handle differently.
