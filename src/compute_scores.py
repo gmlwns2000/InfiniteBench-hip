@@ -309,7 +309,7 @@ def get_score_one_longbook_sum_eng(
     score = ROUGE_SCORER.compute(
         predictions=[pred], references=[label], use_aggregator=False
     )
-    return score["rougeLsum"][0]  # type: ignore
+    return score["rouge1"][0], score["rouge2"][0], score["rougeL"][0], score["rougeLsum"][0]  # type: ignore
 
 
 def get_score_one_longbook_qa_chn(pred, label, model_name: str) -> float:
@@ -373,7 +373,7 @@ def get_score_one(
     }
     assert task_name in NAME_TO_SCORE_GETTER, f"Invalid task name: {task_name}"
     score = NAME_TO_SCORE_GETTER[task_name](pred, label, model_name)
-    return float(score)
+    return score
 
 
 def get_labels(preds: list) -> list[str]:
@@ -410,7 +410,14 @@ def get_score(
     for label, pred in tqdm(zip(labels, preds)):
         score = get_score_one(pred, label, data_name, model_name)
         scores.append(score)
-    return sum(scores) / len(scores)
+    if isinstance(score, tuple):
+        reduced = []
+        for i in range(len(score)):
+            t = list(map(lambda x: x[i], scores))
+            reduced.append(sum(t) / len(t))
+        return tuple(reduced)
+    else:
+        return sum(scores) / len(scores)
 
 
 def compute_scores(preds_path, data_name: str, model_name: str):

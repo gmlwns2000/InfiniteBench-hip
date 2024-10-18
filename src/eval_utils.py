@@ -266,7 +266,7 @@ def create_prompt(eg: dict, data_name: str, model_name: Optional[str], data_dir)
     if model_name and model_name in MODEL_TO_PROMPT_TEMPLATE:
         templates = MODEL_TO_PROMPT_TEMPLATE[model_name]
         template = templates[data_name]
-    elif model_name and 'llama3' in model_name:
+    elif model_name and ('llama3' in model_name):
         templates = MODEL_TO_PROMPT_TEMPLATE['llama3']
         template = templates[data_name]
     else:
