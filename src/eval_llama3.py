@@ -20,6 +20,7 @@ from args import parse_args
 
 
 USING_SGLANG = os.getenv('USING_SGLANG', '0') == '1'
+SGLANG_PORT = int(os.getenv('SGLANG_PORT', '30000'))
 MAX_POSITION_ID = int(os.getenv('SEQ_LEN', '128')) * 1024  # Determined by the model
 TRUNCATE_LEN = int(os.getenv('SEQ_LEN', '128')) * 1024
 
@@ -147,11 +148,11 @@ def chunk_generate(
             import requests
 
             response = requests.post(
-                "http://localhost:30000/generate",
+                f"http://localhost:{SGLANG_PORT}/generate",
                 json={
                     "text": tok.decode(input_ids[0], skip_special_tokens=False),
                     "sampling_params": {
-                        "temperature": 0,
+                        "top_k": 1, # greedy
                         "max_new_tokens": max_tokens,
                     },
                 },
@@ -202,6 +203,7 @@ def get_pred(
         chunk_size=4096,
         verbose=verbose,
     )[0]
+    output = output.replace('<|eot_id|>', '')
     print("Chunked generation:", output.replace('\n', '\\n'))
     return output
 
