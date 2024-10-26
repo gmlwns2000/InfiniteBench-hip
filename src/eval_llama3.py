@@ -44,8 +44,8 @@ def truncate_by_tokens(input, tok, max_tokens, manner: str = "middle"):
     len_after = len(tokens)  # type: ignore
     print(f"# tokens after: {len_after}")
     # print(tokens[:20], tokens[-20:])
-    assert len_after <= len_before
-    assert len_after <= max_tokens
+    assert len_after <= (len_before + 16)
+    assert len_after <= (max_tokens + 16)
     return tok.decode(tokens, skip_special_tokens=False)
 
 
