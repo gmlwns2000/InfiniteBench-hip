@@ -5,3 +5,4 @@ __pycache__
 src/plot
 data/
 results/
+dummy*.png

@@ -241,7 +241,7 @@ def load_model(
 
 if __name__ == "__main__":
     args = parse_args()
-    model_name = f"llama3-{TRUNCATE_LEN}-{args.model_name}"
+    model_name = f"llama3-{TRUNCATE_LEN // 1024}-{args.model_name}"
 
     print(json.dumps(vars(args), indent=4))
     data_name = args.task

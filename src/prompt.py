@@ -67,7 +67,7 @@ Today Date: 26 Jul 2024
 
 <|eot_id|>"""
 LLAMA3_USER_PRM = """<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n"""
-LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
+LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"""
 
 llama3_templates = {
     # FIXED prompt

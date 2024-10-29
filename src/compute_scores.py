@@ -458,4 +458,5 @@ if __name__ == "__main__":
             assert preds_path.exists(), f"Predictions not found in: {preds_path}"
             compute_scores(preds_path, task, args.model_name)
         else:
-            print('WARN', preds_path, 'not found')
+            # print('WARN', preds_path, 'not found')
+            pass
