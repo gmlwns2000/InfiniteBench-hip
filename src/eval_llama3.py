@@ -46,7 +46,7 @@ def truncate_by_tokens(input, tok, max_tokens, manner: str = "middle"):
     # print(tokens[:20], tokens[-20:])
     assert len_after <= (len_before + 16)
     assert len_after <= (max_tokens + 16)
-    return tok.decode(tokens, skip_special_tokens=False)
+    return tok.decode(tokens, skip_special_tokens=False), len_after
 
 
 def chunk_generate(
@@ -186,7 +186,7 @@ def get_pred(
     """
     print("Truncating... ", end = '')
     # pre_len = len(input_text)
-    input_text = truncate_by_tokens(input_text, tok, TRUNCATE_LEN - max_tokens - 32)
+    input_text, len_after = truncate_by_tokens(input_text, tok, TRUNCATE_LEN - max_tokens - 32)
     # print(f' {pre_len} -> {len(input_text)}')
     if verbose:
         print("# chars:", len(input_text))
@@ -205,7 +205,7 @@ def get_pred(
     )[0]
     output = output.replace('<|eot_id|>', '')
     print("Chunked generation:", output.replace('\n', '\\n'))
-    return output
+    return output, len_after
 
 
 from hip.models.modeling_llama import LlamaForCausalLM
@@ -276,7 +276,7 @@ if __name__ == "__main__":
         eg = examples[i]
         input_text = create_prompt(eg, data_name, model_name, args.data_dir)
         print(f"====== Example {i} ======")
-        pred = get_pred(
+        pred, len_after = get_pred(
             model, tok, input_text, max_tokens=max_tokens, verbose=args.verbose
         )
         if args.verbose:
@@ -286,6 +286,7 @@ if __name__ == "__main__":
                 "id": i,
                 "prediction": pred,
                 "ground_truth": get_answer(eg, data_name),
+                "context_length": len_after,
             }
         )
         dump_jsonl(preds, output_path)

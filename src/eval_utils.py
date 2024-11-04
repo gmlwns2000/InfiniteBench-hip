@@ -372,7 +372,7 @@ def get_answer(eg: dict, data_name: str):
             raise ValueError
         return ret
 
-    return eg["answer"]
+    return list(reversed(eg["answer"]))
 
 # Old version - Commented out as GPT4 is no longer used....
 # def create_msgs(
