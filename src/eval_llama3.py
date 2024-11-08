@@ -147,10 +147,12 @@ def chunk_generate(
         if USING_SGLANG:
             import requests
 
+            prompt_text = tok.decode(input_ids[0], skip_special_tokens=False)
+            
             response = requests.post(
                 f"http://localhost:{SGLANG_PORT}/generate",
                 json={
-                    "text": tok.decode(input_ids[0], skip_special_tokens=False),
+                    "text": prompt_text,
                     "sampling_params": {
                         "top_k": 1, # greedy
                         "max_new_tokens": max_tokens,
@@ -204,6 +206,7 @@ def get_pred(
         verbose=verbose,
     )[0]
     output = output.replace('<|eot_id|>', '')
+    output = output.replace('[|endofturn|]', '')
     print("Chunked generation:", output.replace('\n', '\\n'))
     return output, len_after
 
@@ -241,7 +244,11 @@ def load_model(
 
 if __name__ == "__main__":
     args = parse_args()
-    model_name = f"llama3-{TRUNCATE_LEN // 1024}-{args.model_name}"
+    IS_EXAONE = os.getenv('IS_EXAONE', '0') == '1'
+    if IS_EXAONE:
+        model_name = f"exaone3-{TRUNCATE_LEN // 1024}-{args.model_name}"
+    else:
+        model_name = f"llama3-{TRUNCATE_LEN // 1024}-{args.model_name}"
 
     print(json.dumps(vars(args), indent=4))
     data_name = args.task
