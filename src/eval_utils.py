@@ -18,6 +18,7 @@ from prompt import (
     yarn_mistral_templates,
     llama3_templates,
     exaone3_templates,
+    gemma2_templates,
 )
 
 DATA_NAME_TO_PATH = {
@@ -65,6 +66,7 @@ MODEL_TO_PROMPT_TEMPLATE = {
     "chatglm3": yarn_mistral_templates,
     "llama3": llama3_templates,
     "exaone3": exaone3_templates,
+    "gemma2": gemma2_templates,
 }
 
 
@@ -273,6 +275,9 @@ def create_prompt(eg: dict, data_name: str, model_name: Optional[str], data_dir)
         template = templates[data_name]
     elif model_name and ('exaone3' in model_name):
         templates = MODEL_TO_PROMPT_TEMPLATE['exaone3']
+        template = templates[data_name]
+    elif model_name and ('gemma2' in model_name):
+        templates = MODEL_TO_PROMPT_TEMPLATE['gemma2']
         template = templates[data_name]
     else:
         # If no model-specific template, return a basic prompt or handle differently.

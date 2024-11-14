@@ -106,3 +106,24 @@ exaone3_templates = {
     "number_string": f"{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}There is an important info hidden inside a lot of irrelevant text. Find it. I will quiz you about the important information there.\n\n{{context}}\n{{input}}\n{EXAONE3_USER_END}The sequence of digits is",  # noqa
     "kv_retrieval": f"{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}Extract the value corresponding to the specified key in the JSON object below.\n\n{{context}}\n{{input}}\n{EXAONE3_USER_END}",  # noqa
 }
+
+GEMMA2_SYSTEM_PRM = """<bos>"""
+GEMMA2_USER_PRM = """<start_of_turn>user\n"""
+GEMMA2_USER_END = """<end_of_turn>\n<start_of_turn>assistant\n"""
+
+gemma2_templates = {
+    # FIXED prompt
+    "longbook_qa_eng": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}Read the book below and answer a question.\n\nQuestion: {{question}}\n\nBe very concise.-----{{context}}-----\n\nHere, I repeat my question. Question: {{question}}\n\nBe very concise. Now, please answer to my question.{GEMMA2_USER_END}",  # noqa
+    "longbook_choice_eng": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}Read the book and answer the question.\n\nQuestion: {{question}}\n\nOnly one of the following options is correct, tell me the answer using one single letter (A, B, C, or D). Don't say anything else.\nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}\n\n-------{{context}}-------\n\nNow, answer to my question `{{question}}`, in single letter (A or B or C or D).\n\nI will repeat the options.\n\nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}\n\nNow, please answer to my question preciesly.\n\nQ: \"{{question}}\"\n\nThink carefully. **Answer only single letter.** You do not need to explain anything else.{GEMMA2_USER_END}",  # noqa
+    "longbook_sum_eng": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}Summarize the book below:\n\n-----{{context}}-----\n\nPlease summarize the given book.{GEMMA2_USER_END}",  # noqa
+    "longdialogue_qa_eng": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is. Give me the answer using the name before the colons, don't say anything else.\n\n-----{{context}}-----\n\nYou should try to guess $$MASK$$ who that character is. Give me the answer using the name before the colons, don't say anything else.{GEMMA2_USER_END}",  # noqa
+    "longbook_qa_chn": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}阅读以下书籍然后回答问题。\n\n问题：{{question}}\n答案：{{context}}阅读以书籍然后回答问题。{GEMMA2_USER_END}",  # noqa
+    
+    "passkey": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}There is an important info hidden inside a lot of irrelevant text. Find it and memorize them. I will quiz you about the important information there.\n\n{{context}}\n{{input}}\n{GEMMA2_USER_END}The pass key is",  # noqa
+    "code_run": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}In the file functions_module.py, there is a function called ${{func}}.\n\n\nHere is the content of functions_module.py:\n\nPlease give me the exact number of the return value of ${{func_call}}. Your response should end with the sentence 'The return value is:'.\n\n{{context}}{GEMMA2_USER_END}",  # noqa
+    "code_debug": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}Below is a code repository where there is one single function with bugs that causes an error. Please tell me the name of that function.\nWhich function has bugs? Give me the final answer in this format: \"[FINAL ANSWER: XXX]\". Don't say anything else.\n\n{{fcontext}}{GEMMA2_USER_END}",  # noqa
+    "math_find": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}{{prefix}}\n\n{{context}}\n\n{{input}}{GEMMA2_USER_END}",
+    "math_calc": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}Let us calculate the intermediate values of an expression.\nExpression: 1 + 3 + 4\nValues: [1, 4, 8]\n\nExpression: 8 - 3 + 2 - 4\nValues: [8, 5, 7, 3]\n\nExpression: {{context}}\n{GEMMA2_USER_END}Values:",  # noqa
+    "number_string": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}There is an important info hidden inside a lot of irrelevant text. Find it. I will quiz you about the important information there.\n\n{{context}}\n{{input}}\n{GEMMA2_USER_END}The sequence of digits is",  # noqa
+    "kv_retrieval": f"{GEMMA2_SYSTEM_PRM}{GEMMA2_USER_PRM}Extract the value corresponding to the specified key in the JSON object below.\n\n{{context}}\n{{input}}\n{GEMMA2_USER_END}",  # noqa
+}

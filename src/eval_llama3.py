@@ -206,6 +206,8 @@ def get_pred(
         verbose=verbose,
     )[0]
     output = output.replace('<|eot_id|>', '')
+    output = output.replace('<eos>', '')
+    output = output.replace('<end_of_turn>', '')
     output = output.replace('[|endofturn|]', '')
     print("Chunked generation:", output.replace('\n', '\\n'))
     return output, len_after
@@ -245,8 +247,11 @@ def load_model(
 if __name__ == "__main__":
     args = parse_args()
     IS_EXAONE = os.getenv('IS_EXAONE', '0') == '1'
+    IS_GEMMA = os.getenv('IS_GEMMA', '0') == '1'
     if IS_EXAONE:
         model_name = f"exaone3-{TRUNCATE_LEN // 1024}-{args.model_name}"
+    elif IS_GEMMA:
+        model_name = f'gemma2-{TRUNCATE_LEN // 1024}-{args.model_name}'
     else:
         model_name = f"llama3-{TRUNCATE_LEN // 1024}-{args.model_name}"
 
