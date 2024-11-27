@@ -71,7 +71,35 @@ LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 llama3_templates = {
     # FIXED prompt
-    "longbook_qa_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Read the book below and answer a question.\n\nQuestion: {{question}}\n\nBe very concise.-----{{context}}-----\n\nHere, I repeat my question. Question: {{question}}\n\nBe very concise. Now, please answer to my question.{LLAMA3_USER_END}",  # noqa
+    "longbook_qa_eng": f"""{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}You are a helpful assistant.
+
+Your task is reading the book below (given text) and answer a question.
+
+Here is my question: {{question}}
+
+Be very concise.
+
+--------------------------------------------------
+- The start of given text.
+--------------------------------------------------
+
+{{context}}
+
+--------------------------------------------------
+- The end of given text.
+--------------------------------------------------
+
+Here, I repeat my question.
+
+Question: {{question}}
+
+Before answer the question, here is rules that you have to follow
+- **Be very concise**.
+- Answer within one sentence.
+- You cannot answer like "there is no answer"
+- All question have the answer.
+
+Now, please answer to my question.{LLAMA3_USER_END}""",  # noqa
     "longbook_choice_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Read the book and answer the question.\n\nQuestion: {{question}}\n\nOnly one of the following options is correct, tell me the answer using one single letter (A, B, C, or D). Don't say anything else.\nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}\n\n-------{{context}}-------\n\nNow, answer to my question `{{question}}`, in single letter (A or B or C or D).\nI will repeat the options. \nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}\n\nNow, please answer to my question preciesly.\n\nQ: \"{{question}}\"\n\nThink carefully. {LLAMA3_USER_END}",  # noqa
     "longbook_sum_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Summarize the book below:\n\n-----{{context}}-----\n\nPlease summarize the given book.{LLAMA3_USER_END}",  # noqa
     "longdialogue_qa_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is. Give me the answer using the name before the colons, don't say anything else.\n\n-----{{context}}-----\n\nYou should try to guess $$MASK$$ who that character is. Give me the answer using the name before the colons, don't say anything else.{LLAMA3_USER_END}",  # noqa
@@ -88,12 +116,65 @@ llama3_templates = {
 
 EXAONE3_SYSTEM_PRM = """[BOS][|system|][|endofturn|]\n"""
 EXAONE3_USER_PRM = """[|user|]\n"""
-EXAONE3_USER_END = """[|endofturn|]\n[|assistant|]\n"""
+EXAONE3_USER_END = """[|endofturn|]\n[|assistant|]"""
 
 exaone3_templates = {
     # FIXED prompt
-    "longbook_qa_eng": f"{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}Read the book below and answer a question.\n\nQuestion: {{question}}\n\nBe very concise.-----{{context}}-----\n\nHere, I repeat my question. Question: {{question}}\n\nBe very concise. Now, please answer to my question.{EXAONE3_USER_END}",  # noqa
-    "longbook_choice_eng": f"{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}Read the book and answer the question.\n\nQuestion: {{question}}\n\nOnly one of the following options is correct, tell me the answer using one single letter (A, B, C, or D). Don't say anything else.\nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}\n\n-------{{context}}-------\n\nNow, answer to my question `{{question}}`, in single letter (A or B or C or D).\n\nI will repeat the options.\n\nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}\n\nNow, please answer to my question preciesly.\n\nQ: \"{{question}}\"\n\nThink carefully. **Answer only single letter.** You do not need to explain anything else.{EXAONE3_USER_END}",  # noqa
+    "longbook_qa_eng": f"""{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}Read the book below and answer a question.
+
+Question: {{question}}
+
+Be very concise.
+
+--------------------------------------------------
+- The start of given text.
+--------------------------------------------------
+
+{{context}}
+
+--------------------------------------------------
+- The end of given text.
+--------------------------------------------------
+
+Here, I repeat my question. Question: {{question}}
+
+Be very concise. Now, please answer to my question.{EXAONE3_USER_END}""",  # noqa
+    "longbook_choice_eng": f"""{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}Read the book and answer the question.
+Question: {{question}}
+
+Only one of the following options is correct, tell me the answer using one single letter (A, B, C, or D). Don't say anything else.
+A. {{OPTION_A}}
+B. {{OPTION_B}}
+C. {{OPTION_C}}
+D. {{OPTION_D}}
+
+--------------------------------------------------
+- The start of given text.
+--------------------------------------------------
+
+{{context}}
+
+--------------------------------------------------
+- The end of given text.
+--------------------------------------------------
+
+Now, answer to my question **{{question}}**, in single letter (A or B or C or D).
+
+I will repeat the options.
+
+A. {{OPTION_A}}
+B. {{OPTION_B}}
+C. {{OPTION_C}}
+D. {{OPTION_D}}
+
+Now, please answer to my question preciesly.
+
+Q: \"{{question}}\"
+
+Think carefully. Here is rules that you have to follow
+- **Answer only single letter.** Do not say anything else.
+- Do not explain the answer.
+- For example, answer like "A." or "B." or "C." or "D."{EXAONE3_USER_END}""",  # noqa
     "longbook_sum_eng": f"{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}Summarize the book below:\n\n-----{{context}}-----\n\nPlease summarize the given book.{EXAONE3_USER_END}",  # noqa
     "longdialogue_qa_eng": f"{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is. Give me the answer using the name before the colons, don't say anything else.\n\n-----{{context}}-----\n\nYou should try to guess $$MASK$$ who that character is. Give me the answer using the name before the colons, don't say anything else.{EXAONE3_USER_END}",  # noqa
     "longbook_qa_chn": f"{EXAONE3_SYSTEM_PRM}{EXAONE3_USER_PRM}阅读以下书籍然后回答问题。\n\n问题：{{question}}\n答案：{{context}}阅读以书籍然后回答问题。{EXAONE3_USER_END}",  # noqa
