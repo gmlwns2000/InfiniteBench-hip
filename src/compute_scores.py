@@ -76,7 +76,7 @@ def qa_f1_score(pred: str, ground_truths) -> float:
         f1 = max(f1, this_f1)
         prec = max(prec, this_prec)
         recall = max(recall, this_recall)
-    return f1
+    return {'f1': f1, 'recall': recall}
 
 
 def qa_f1_score_zh(pred: str, ground_truths: list[str]) -> float:
@@ -309,8 +309,12 @@ def get_score_one_longbook_sum_eng(
     score = ROUGE_SCORER.compute(
         predictions=[pred], references=[label], use_aggregator=False
     )
-    return score["rouge1"][0], score["rouge2"][0], score["rougeL"][0], score["rougeLsum"][0]  # type: ignore
-
+    return {
+        'R1': score["rouge1"][0], 
+        'R2': score["rouge2"][0], 
+        'RL': score["rougeL"][0], 
+        'RLsum': score["rougeLsum"][0]
+    }
 
 def get_score_one_longbook_qa_chn(pred, label, model_name: str) -> float:
     return qa_f1_score_zh(pred, label)
@@ -416,6 +420,12 @@ def get_score(
             t = list(map(lambda x: x[i], scores))
             reduced.append(sum(t) / len(t))
         return tuple(reduced)
+    elif isinstance(score, dict):
+        reduced = {}
+        for k in score:
+            t = list(map(lambda x: x[k], scores))
+            reduced[k] = sum(t) / len(t)
+        return reduced
     else:
         return sum(scores) / len(scores)
 
