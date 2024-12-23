@@ -35,14 +35,16 @@ def truncate_input(input: list, max_length: int, manner="middle"):
         return None
 
 
-def truncate_by_tokens(input, tok, max_tokens, manner: str = "middle"):
+def truncate_by_tokens(input, tok, max_tokens, manner: str = "middle", quite = False):
     tokens = tok.encode(input)
     len_before = len(tokens)
-    print(f"# tokens before: {len_before}, ", end='')
+    if not quite:
+        print(f"# tokens before: {len_before}, ", end='')
     tokens = truncate_input(tokens, max_length=max_tokens, manner=manner)
     tokens = tok.encode(tok.decode(tokens, skip_special_tokens=False), add_special_tokens=False)
     len_after = len(tokens)  # type: ignore
-    print(f"# tokens after: {len_after}")
+    if not quite:
+        print(f"# tokens after: {len_after}")
     # print(tokens[:20], tokens[-20:])
     assert len_after <= (len_before + 16)
     assert len_after <= (max_tokens + 16)
@@ -182,14 +184,16 @@ def get_pred(
     input_text: str,
     max_tokens: int,
     verbose: bool = False,
+    reqiure_truncate: bool = True,
 ) -> str:
     """
     Truncate down to 128k then make inference.
     """
-    print("Truncating... ", end = '')
-    # pre_len = len(input_text)
-    input_text, len_after = truncate_by_tokens(input_text, tok, TRUNCATE_LEN - max_tokens - 32)
-    # print(f' {pre_len} -> {len(input_text)}')
+    if reqiure_truncate:
+        print("Truncating... ", end = '')
+        input_text, len_after = truncate_by_tokens(input_text, tok, TRUNCATE_LEN - max_tokens - 32)
+    else:
+        len_after = 0
     if verbose:
         print("# chars:", len(input_text))
         print("=============== Input ===============")
@@ -284,12 +288,30 @@ if __name__ == "__main__":
     print(f"Stop index: {args.stop_idx}")
     print(f"Verbose: {args.verbose}")
     print(f"Max tokens: {max_tokens}")
+    input_texts = []
+    import threading
+    
+    def thread_main():
+        for i in range(args.start_idx, args.stop_idx):
+            eg = examples[i]
+            input_text = create_prompt(eg, data_name, model_name, args.data_dir)
+            # print("Truncating... ", end = '')
+            input_text, _ = truncate_by_tokens(input_text, tok, TRUNCATE_LEN - max_tokens - 32, quite=True)
+            input_texts.append(input_text)
+    t = threading.Thread(target=thread_main, daemon=True)
+    t.start()
+    
     for i in range(args.start_idx, args.stop_idx):
         eg = examples[i]
-        input_text = create_prompt(eg, data_name, model_name, args.data_dir)
         print(f"====== Example {i} ======")
+        while len(input_texts) <= i:
+            time.sleep(0.001)
+        input_text = input_texts[i]
         pred, len_after = get_pred(
-            model, tok, input_text, max_tokens=max_tokens, verbose=args.verbose
+            model, tok, input_text,
+            max_tokens=max_tokens,
+            verbose=args.verbose,
+            reqiure_truncate=False,
         )
         if args.verbose:
             print(pred)
