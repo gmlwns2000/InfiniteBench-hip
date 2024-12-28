@@ -36,7 +36,7 @@ def truncate_input(input: list, max_length: int, manner="middle"):
 
 
 def truncate_by_tokens(input, tok, max_tokens, manner: str = "middle", quite = False):
-    tokens = tok.encode(input)
+    tokens = tok.encode(input, add_special_tokens=False)
     len_before = len(tokens)
     if not quite:
         print(f"# tokens before: {len_before}, ", end='')
