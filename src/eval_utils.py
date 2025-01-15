@@ -19,6 +19,7 @@ from prompt import (
     llama3_templates,
     exaone3_templates,
     gemma2_templates,
+    mistral_templates,
 )
 
 DATA_NAME_TO_PATH = {
@@ -42,18 +43,18 @@ DATA_NAME_TO_PATH = {
 }
 
 DATA_NAME_TO_MAX_NEW_TOKENS = {
-    "passkey": 20,
-    "number_string": 12,
-    "kv_retrieval": 50,
+    "passkey": 128,
+    "number_string": 128,
+    "kv_retrieval": 128,
     "longbook_sum_eng": 1200,
-    "longbook_choice_eng": 10,
+    "longbook_choice_eng": 32,
     "longbook_qa_eng": 100,
     "longbook_qa_chn": 100,
     "longdialogue_qa_eng": 40,
-    "math_find": 3,
+    "math_find": 128,
     "math_calc": 30000,
-    "code_run": 5,
-    "code_debug": 5,
+    "code_run": 128,
+    "code_debug": 128,
 }
 
 MODEL_TO_PROMPT_TEMPLATE = {
@@ -67,6 +68,7 @@ MODEL_TO_PROMPT_TEMPLATE = {
     "llama3": llama3_templates,
     "exaone3": exaone3_templates,
     "gemma2": gemma2_templates,
+    "mistral": mistral_templates,
 }
 
 
@@ -279,6 +281,9 @@ def create_prompt(eg: dict, data_name: str, model_name: Optional[str], data_dir)
     elif model_name and ('gemma2' in model_name):
         templates = MODEL_TO_PROMPT_TEMPLATE['gemma2']
         template = templates[data_name]
+    elif model_name and ('mistral' in model_name):
+        templates = MODEL_TO_PROMPT_TEMPLATE['mistral']
+        template = templates[data_name]
     else:
         # If no model-specific template, return a basic prompt or handle differently.
         return eg["context"]
@@ -352,7 +357,17 @@ def create_prompt(eg: dict, data_name: str, model_name: Optional[str], data_dir)
             context=context,
             input=prompt,
         )
-
+    elif data_name == "kv_retrieval":
+        instance = {
+            "context": eg["content"] if "content" in eg else eg["context"],
+            "input": eg["input"],
+            "key": eg["input"][6:44]
+        }
+        assert eg['input'][6] == '"'
+        assert eg['input'][43] == '"'
+        return template.format(
+            **instance
+        )
     # Default behavior if content key exists
     if "content" in eg:
         content = eg["content"]

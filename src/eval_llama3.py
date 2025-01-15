@@ -156,7 +156,8 @@ def chunk_generate(
                 json={
                     "text": prompt_text,
                     "sampling_params": {
-                        "top_k": 1, # greedy
+                        # "top_k": 1, # greedy
+                        "top_p": 1e-6,
                         "max_new_tokens": max_tokens,
                     },
                 },
@@ -252,10 +253,13 @@ if __name__ == "__main__":
     args = parse_args()
     IS_EXAONE = os.getenv('IS_EXAONE', '0') == '1'
     IS_GEMMA = os.getenv('IS_GEMMA', '0') == '1'
+    IS_MISTRAL = os.getenv('IS_MISTRAL', '0') == '1'
     if IS_EXAONE:
         model_name = f"exaone3-{TRUNCATE_LEN // 1024}-{args.model_name}"
     elif IS_GEMMA:
         model_name = f'gemma2-{TRUNCATE_LEN // 1024}-{args.model_name}'
+    elif IS_MISTRAL:
+        model_name = f'mistral-{TRUNCATE_LEN // 1024}-{args.model_name}'
     else:
         model_name = f"llama3-{TRUNCATE_LEN // 1024}-{args.model_name}"
 
@@ -290,6 +294,8 @@ if __name__ == "__main__":
     print(f"Max tokens: {max_tokens}")
     input_texts = []
     import threading
+    for i in range(args.start_idx):
+        input_texts.append(None)
     
     def thread_main():
         for i in range(args.start_idx, args.stop_idx):
