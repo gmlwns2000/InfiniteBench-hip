@@ -229,7 +229,17 @@ def get_score_one_math_find(pred, label, model_name: str) -> bool:
         if first_num is None:
             return False
         first_num = first_num.group(0).strip()
-        return int(first_num) == label
+        first_hit_result = int(first_num) == label
+        
+        if '\\boxed' in pred:
+            loc = pred.find('\\boxed')
+            new_pred = pred[loc+len('\\boxed'):]
+            first_num = re.search(r"\d+\.\d+|\d+", new_pred)
+            if first_num is None:
+                return first_hit_result
+            first_num = first_num.group(0).strip()
+            first_hit_result = (int(first_num) == label) or first_hit_result
+        return first_hit_result
     elif isinstance(label, float):
         # Find first float or int
         first_float = re.search(r"\d+\.\d+|\d+", pred)
@@ -278,7 +288,7 @@ def get_score_one_longbook_choice_eng(pred, label, model_name: str) -> bool:
         "option is",
     ]
     for prefix in ans_prefixes:
-        idx = pred.find(prefix)
+        idx = pred.lower().find(prefix.lower())
         if idx == -1:
             continue
         # The prediction ends with this prefix
@@ -286,9 +296,9 @@ def get_score_one_longbook_choice_eng(pred, label, model_name: str) -> bool:
             return False
         after_prefix = pred[idx + len(prefix) + 1 :]
         for s in label:
-            if after_prefix.startswith(s):
+            if after_prefix.lower().startswith(s.lower()):
                 return True
-        return False
+        # return False
 
     # Finally, just find the first occurrence of A, B, C, or D.
     words = pred.split()

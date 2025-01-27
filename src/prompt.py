@@ -62,14 +62,21 @@ kimi_templates = {
     "longdialogue_qa_eng": "Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is. Give me the answer using the name before the colons, don't say anything else.\n\n{context}",  # noqa
 }
 
-LLAMA3_SYSTEM_PRM = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+IS_DEEPSEEK = os.getenv('IS_DEEPSEEK', '0') == '1'
 
-Cutting Knowledge Date: December 2023
-Today Date: 26 Jul 2024
+if not IS_DEEPSEEK:
+    LLAMA3_SYSTEM_PRM = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-<|eot_id|>"""
-LLAMA3_USER_PRM = """<|start_header_id|>user<|end_header_id|>\n\n"""
-LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"""
+    Cutting Knowledge Date: December 2023
+    Today Date: 26 Jul 2024
+
+    <|eot_id|>"""
+    LLAMA3_USER_PRM = """<|start_header_id|>user<|end_header_id|>\n\n"""
+    LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"""
+else:
+    LLAMA3_SYSTEM_PRM = """<｜begin▁of▁sentence｜>"""
+    LLAMA3_USER_PRM = """<｜User｜>"""
+    LLAMA3_USER_END = """<｜Assistant｜>"""
 
 IS_INFLLM = os.getenv('IS_INFLLM', '0') == '1'
 

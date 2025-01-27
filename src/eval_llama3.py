@@ -19,6 +19,7 @@ from eval_utils import (
 from args import parse_args
 
 
+IS_DEEPSEEK = os.getenv('IS_DEEPSEEK', '0') == '1'
 USING_SGLANG = os.getenv('USING_SGLANG', '0') == '1'
 SGLANG_PORT = int(os.getenv('SGLANG_PORT', '30000'))
 MAX_POSITION_ID = int(os.getenv('SEQ_LEN', '128')) * 1024  # Determined by the model
@@ -151,20 +152,41 @@ def chunk_generate(
 
             prompt_text = tok.decode(input_ids[0], skip_special_tokens=False)
             
+            if IS_DEEPSEEK:
+                sampling_params = {
+                    "top_p": 1.0,
+                    "temperature": 0.4,
+                    "max_new_tokens": 4096,
+                }
+            else:
+                sampling_params = {
+                    # "top_k": 1, # greedy
+                    "top_p": 1e-6,
+                    "max_new_tokens": max_tokens,
+                }
+            
             response = requests.post(
                 f"http://localhost:{SGLANG_PORT}/generate",
                 json={
                     "text": prompt_text,
-                    "sampling_params": {
-                        # "top_k": 1, # greedy
-                        "top_p": 1e-6,
-                        "max_new_tokens": max_tokens,
-                    },
+                    "sampling_params": sampling_params,
                 },
             )
             assert response.status_code == 200, response.json()
             # print(response.json())
-            responses = [response.json()['text']]
+            
+            decoded = response.json()['text'] # type: str
+            
+            if IS_DEEPSEEK:
+                # print(f'RAW decoded: \n--------------\n{decoded}\n--------------\n')
+                # print('</think>' in decoded, decoded.find('</think>'))
+                if '</think>' in decoded:
+                    start_idx = decoded.find('</think>')
+                    decoded = decoded[start_idx + len('</think>'):].strip()
+                else:
+                    decoded = decoded[-max_tokens*3:]
+            
+            responses = [decoded]
         else:
             outputs = model.generate(
                 input_ids=input_ids,
