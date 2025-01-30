@@ -156,7 +156,7 @@ def chunk_generate(
                 sampling_params = {
                     "top_p": 1.0,
                     "temperature": 0.4,
-                    "max_new_tokens": 4096,
+                    "max_new_tokens": 8192,
                 }
             else:
                 sampling_params = {

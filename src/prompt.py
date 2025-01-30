@@ -63,8 +63,17 @@ kimi_templates = {
 }
 
 IS_DEEPSEEK = os.getenv('IS_DEEPSEEK', '0') == '1'
+IS_QWEN = os.getenv('IS_QWEN', '0') == '1'
 
-if not IS_DEEPSEEK:
+if IS_DEEPSEEK:
+    LLAMA3_SYSTEM_PRM = """<｜begin▁of▁sentence｜>"""
+    LLAMA3_USER_PRM = """<｜User｜>"""
+    LLAMA3_USER_END = """<｜Assistant｜>"""
+elif IS_QWEN:
+    LLAMA3_SYSTEM_PRM = """<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n"""
+    LLAMA3_USER_PRM = """<|im_start|>user\n"""
+    LLAMA3_USER_END = """<|im_end|>\n<|im_start|>assistant\n"""
+else:
     LLAMA3_SYSTEM_PRM = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
     Cutting Knowledge Date: December 2023
@@ -73,10 +82,6 @@ if not IS_DEEPSEEK:
     <|eot_id|>"""
     LLAMA3_USER_PRM = """<|start_header_id|>user<|end_header_id|>\n\n"""
     LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"""
-else:
-    LLAMA3_SYSTEM_PRM = """<｜begin▁of▁sentence｜>"""
-    LLAMA3_USER_PRM = """<｜User｜>"""
-    LLAMA3_USER_END = """<｜Assistant｜>"""
 
 IS_INFLLM = os.getenv('IS_INFLLM', '0') == '1'
 
