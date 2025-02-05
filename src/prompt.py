@@ -64,8 +64,13 @@ kimi_templates = {
 
 IS_DEEPSEEK = os.getenv('IS_DEEPSEEK', '0') == '1'
 IS_QWEN = os.getenv('IS_QWEN', '0') == '1'
+IS_OPENROUTER = os.getenv('IS_OPENROUTER', '0') == '1'
 
-if IS_DEEPSEEK:
+if IS_OPENROUTER:
+    LLAMA3_SYSTEM_PRM = """"""
+    LLAMA3_USER_PRM = """"""
+    LLAMA3_USER_END = """"""
+elif IS_DEEPSEEK:
     LLAMA3_SYSTEM_PRM = """<｜begin▁of▁sentence｜>"""
     LLAMA3_USER_PRM = """<｜User｜>"""
     LLAMA3_USER_END = """<｜Assistant｜>"""
@@ -76,10 +81,10 @@ elif IS_QWEN:
 else:
     LLAMA3_SYSTEM_PRM = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-    Cutting Knowledge Date: December 2023
-    Today Date: 26 Jul 2024
+Cutting Knowledge Date: December 2023
+Today Date: 26 Jul 2024
 
-    <|eot_id|>"""
+<|eot_id|>"""
     LLAMA3_USER_PRM = """<|start_header_id|>user<|end_header_id|>\n\n"""
     LLAMA3_USER_END = """\n\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"""
 

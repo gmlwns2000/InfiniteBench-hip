@@ -19,6 +19,9 @@ from eval_utils import (
 from args import parse_args
 
 
+IS_OPENROUTER = os.getenv('IS_OPENROUTER', '0') == '1'
+OPENROUTER_KEY = os.getenv('OPENROUTER_KEY', 'none')
+OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL', 'google/gemini-flash-1.5')
 IS_DEEPSEEK = os.getenv('IS_DEEPSEEK', '0') == '1'
 USING_SGLANG = os.getenv('USING_SGLANG', '0') == '1'
 SGLANG_PORT = int(os.getenv('SGLANG_PORT', '30000'))
@@ -84,69 +87,6 @@ def chunk_generate(
             inputs = inputs.to(model.device)  # type: ignore
         input_ids: Tensor = inputs.input_ids  # (b, n)
         
-        # attention_mask: Tensor = inputs.attention_mask  # (b, n)
-        # position_ids: Tensor = attention_mask.long().cumsum(dim=-1) - 1
-        # position_ids.masked_fill_(attention_mask == 0, value=1)
-        # seq_len = input_ids.shape[-1]
-        # print("seq_len:", seq_len)
-        # kv_cache: Any = None
-        # # Split into chunks for pre-filling
-        # chunk_idxs = []
-        # n = seq_len - 1
-        # while n > 0:
-        #     chunk_idxs.append(n)
-        #     n -= chunk_size
-        # chunk_idxs.append(0)
-        # chunk_idxs = chunk_idxs[::-1]
-        # chunk_lo = chunk_idxs[:-1]
-        # chunk_hi = chunk_idxs[1:]
-        # print(f"Number of chunks: {len(chunk_lo)}, generating...")
-        # start_time = time.time()
-        # for chunk_i, (chunk_lo, chunk_hi) in enumerate(
-        #     zip(chunk_lo, chunk_hi)
-        # ):
-        #     if verbose:
-        #         print(
-        #             f"[chunk {chunk_i}] {chunk_lo} : {chunk_hi}",
-        #             round(time.time() - start_time),
-        #         )
-        #     chunk_input_ids = input_ids[:, chunk_lo:chunk_hi]
-        #     if kv_cache is not None:
-        #         mask_start_idx = chunk_lo - kv_cache[0][0].shape[2]
-        #     else:
-        #         mask_start_idx = chunk_lo
-        #     chunk_attention_mask = attention_mask[:, mask_start_idx:chunk_hi]
-        #     chunk_position_ids = position_ids[:, chunk_lo:chunk_hi]
-        #     outputs: BaseModelOutputWithPast = model.model.forward(
-        #         input_ids=chunk_input_ids,
-        #         attention_mask=chunk_attention_mask,
-        #         position_ids=chunk_position_ids,
-        #         past_key_values=kv_cache,
-        #         return_dict=True,
-        #         use_cache=True,
-        #     )
-        #     kv_cache = outputs.past_key_values
-        #     # Discard KV states on the left beyond the window
-        #     new_cache = ()
-        #     n_layers = len(kv_cache)
-        #     for layer_i in range(n_layers):
-        #         keys = kv_cache[layer_i][0][:, :, -sliding_window:]
-        #         values = kv_cache[layer_i][1][:, :, -sliding_window:]
-        #         new_cache += ((keys, values),)
-        #     kv_cache = new_cache
-        # kv_cache_len = kv_cache[0][0].shape[2]
-        # outputs = model.generate(
-        #     input_ids=input_ids[:, :],
-        #     attention_mask=attention_mask[:, -kv_cache_len - 1 :],
-        #     max_new_tokens=max_tokens,
-        #     past_key_values=kv_cache,
-        #     eos_token_id=tok.pad_token_id,
-        #     use_cache=True,
-        #     do_sample=False,
-        # )
-        
-        # print(tok.decode(input_ids[0], skip_special_tokens=False)[:500], tok.decode(input_ids[0], skip_special_tokens=False)[-500:])
-        
         if USING_SGLANG:
             import requests
 
@@ -187,6 +127,41 @@ def chunk_generate(
                     decoded = decoded[-max_tokens*3:]
             
             responses = [decoded]
+        elif IS_OPENROUTER:
+            from openai import OpenAI
+            client = OpenAI(
+                base_url='https://openrouter.ai/api/v1',
+                api_key=OPENROUTER_KEY,
+            )
+            
+            while True:
+                prompt_text = tok.decode(input_ids[0], skip_special_tokens=False)
+                
+                completion = client.chat.completions.create(
+                    model=OPENROUTER_MODEL,
+                    messages=[
+                        {
+                            'role': 'user',
+                            'content': [
+                                {
+                                    'type': 'text',
+                                    'text': prompt_text,
+                                }
+                            ]
+                        }
+                    ]
+                )
+                
+                print(completion)
+                
+                if completion.choices is not None:                
+                    responses = [
+                        completion.choices[0].message.content
+                    ]
+                    break
+                else:
+                    print('retry')
+                    time.sleep(1)
         else:
             outputs = model.generate(
                 input_ids=input_ids,
@@ -254,7 +229,7 @@ def load_model(
     # tok.pad_token = tok.eos_token
     print("Loading model")
     start_time = time.time()
-    if not USING_SGLANG:
+    if not (USING_SGLANG or IS_OPENROUTER):
         model = LlamaForCausalLM.from_pretrained(
             model_name, 
             device_map="auto", 
