@@ -137,20 +137,25 @@ def chunk_generate(
             while True:
                 prompt_text = tok.decode(input_ids[0], skip_special_tokens=False)
                 
-                completion = client.chat.completions.create(
-                    model=OPENROUTER_MODEL,
-                    messages=[
-                        {
-                            'role': 'user',
-                            'content': [
-                                {
-                                    'type': 'text',
-                                    'text': prompt_text,
-                                }
-                            ]
-                        }
-                    ]
-                )
+                try:
+                    completion = client.chat.completions.create(
+                        model=OPENROUTER_MODEL,
+                        messages=[
+                            {
+                                'role': 'user',
+                                'content': [
+                                    {
+                                        'type': 'text',
+                                        'text': prompt_text,
+                                    }
+                                ]
+                            }
+                        ]
+                    )
+                except Exception as ex:
+                    print(ex)
+                    time.sleep(1)
+                    continue
                 
                 print(completion)
                 
