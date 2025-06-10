@@ -18,13 +18,16 @@ from eval_utils import (
 )
 from args import parse_args
 
-
+IS_QUESTION = os.getenv('IS_QUESTION', '0') == '1'
+IS_THINK = os.getenv('IS_THINK', '0') == '1'
+IS_CHAT = os.getenv('IS_CHAT', '0') == '1'
 IS_OPENROUTER = os.getenv('IS_OPENROUTER', '0') == '1'
 OPENROUTER_KEY = os.getenv('OPENROUTER_KEY', 'none')
 OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL', 'google/gemini-flash-1.5')
 IS_DEEPSEEK = os.getenv('IS_DEEPSEEK', '0') == '1'
 USING_SGLANG = os.getenv('USING_SGLANG', '0') == '1'
 SGLANG_PORT = int(os.getenv('SGLANG_PORT', '30000'))
+SGLANG_MODEL = os.getenv('SGLANG_MODEL', 'anything')
 MAX_POSITION_ID = int(os.getenv('SEQ_LEN', '128')) * 1024  # Determined by the model
 TRUNCATE_LEN = int(os.getenv('SEQ_LEN', '128')) * 1024
 
@@ -93,38 +96,131 @@ def chunk_generate(
             prompt_text = tok.decode(input_ids[0], skip_special_tokens=False)
             
             if IS_DEEPSEEK:
+                task_max_tokens = max_tokens
                 sampling_params = {
                     "top_p": 1.0,
                     "temperature": 0.4,
                     "max_new_tokens": 8192,
                 }
             else:
-                sampling_params = {
-                    # "top_k": 1, # greedy
-                    "top_p": 1e-6,
-                    "max_new_tokens": max_tokens,
-                }
+                if IS_THINK:
+                    max_tokens = 8192
+                    task_max_tokens = max_tokens
+                    
+                    sampling_params = {
+                        "top_k": 20 ,
+                        "temperature": 0.6,
+                        "top_p": 0.95,
+                        "max_new_tokens": max_tokens,
+                        "max_tokens": max_tokens,
+                    }
+                else:
+                    sampling_params = {
+                        # "top_k": 1, # greedy
+                        "temperature": 0.0,
+                        "top_p": 1e-6,
+                        "max_new_tokens": max_tokens,
+                        "max_tokens": max_tokens,
+                    }
+                    sampling_params.update({
+                        "chat_template_kwargs": {"enable_thinking": False}
+                    })
             
-            response = requests.post(
-                f"http://localhost:{SGLANG_PORT}/generate",
-                json={
-                    "text": prompt_text,
-                    "sampling_params": sampling_params,
-                },
-            )
-            assert response.status_code == 200, response.json()
-            # print(response.json())
+            if IS_CHAT:
+                if not IS_QUESTION:
+                    response = requests.post(
+                        f"http://localhost:{SGLANG_PORT}/v1/chat/completions",
+                        json={
+                            "model": SGLANG_MODEL,
+                            "messages": [{
+                                'role': 'user', 
+                                'content': prompt_text
+                            }],
+                            **sampling_params,
+                        },
+                    )
+                    assert response.status_code == 200, response.json()
+                    
+                    decoded = response.json()["choices"][0]["message"]["content"] # type: str
+                else:
+                    response = requests.post(
+                        f"http://localhost:{SGLANG_PORT}/v1/chat/completions",
+                        json={
+                            "model": SGLANG_MODEL,
+                            "messages": [
+                                {
+                                    'role': 'system',
+                                    'content': r"Your job is scanning user's message and answer the potential questions of user including current message."
+                                },
+                                {
+                                    'role': 'user', 
+                                    'content': (
+                                        f"Here is user's message. Please read carefully and think potential user's questions."
+                                        f"\n\n-----\n\n{prompt_text}\n\n-----\n\n"
+                                    )
+                                },
+                            ],
+                            "top_p": 1e-6,
+                            "max_new_tokens": 1024,
+                        },
+                    )
+                    assert response.status_code == 200, response.json()
+                    
+                    decoded = response.json()["choices"][0]["message"]["content"] # type: str
+                    print(decoded)
+                    
+                    response = requests.post(
+                        f"http://localhost:{SGLANG_PORT}/v1/chat/completions",
+                        json={
+                            "model": SGLANG_MODEL,
+                            "messages": [
+                                {
+                                    'role': 'system',
+                                    'content': (
+                                        f"You are a helpful assistant. Your job is answering user's query.\n\n"
+                                        f"Your kind superviosor already collect user's potential queries.\n\n"
+                                        f"Provided questions may related to upcoming user's behavior, so you need to remember them carefully.\n\n"
+                                        f"Here is collected potential questions from users:\n\n"
+                                        f"```py\n{decoded}```\n\n"
+                                        f"Now, read carefully to user's message and please answer user's query."
+                                    )
+                                },
+                                {
+                                    'role': 'user', 
+                                    'content': prompt_text
+                                },
+                            ],
+                            **sampling_params,
+                        },
+                    )
+                    assert response.status_code == 200, response.json()
+                    
+                    decoded = response.json()["choices"][0]["message"]["content"] # type: str
+                    
+                    print(decoded)
+            else:
+                if 'max_tokens' in sampling_params:
+                    del sampling_params['max_tokens']
+                response = requests.post(
+                    f"http://localhost:{SGLANG_PORT}/generate",
+                    json={
+                        "text": prompt_text,
+                        "sampling_params": sampling_params,
+                    },
+                )
+                assert response.status_code == 200, response.json()
+                # print(response.json())
+                
+                decoded = response.json()['text'] # type: str
             
-            decoded = response.json()['text'] # type: str
-            
-            if IS_DEEPSEEK:
+            if IS_DEEPSEEK or IS_THINK:
                 # print(f'RAW decoded: \n--------------\n{decoded}\n--------------\n')
                 # print('</think>' in decoded, decoded.find('</think>'))
                 if '</think>' in decoded:
                     start_idx = decoded.find('</think>')
                     decoded = decoded[start_idx + len('</think>'):].strip()
                 else:
-                    decoded = decoded[-max_tokens*3:]
+                    decoded = decoded[-task_max_tokens*3:]
             
             responses = [decoded]
         elif IS_OPENROUTER:
@@ -220,7 +316,7 @@ def get_pred(
     return output, len_after
 
 
-from hip.models.modeling_llama import LlamaForCausalLM
+from hip_attn.models.modeling_llama import LlamaForCausalLM
 from transformers import LlamaForCausalLM as OriginalLlamaForCausalLM
 
 ATTENTION_METHOD = os.getenv('ATTENTION_METHOD', 'hip')

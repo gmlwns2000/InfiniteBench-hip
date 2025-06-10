@@ -65,13 +65,15 @@ kimi_templates = {
 IS_DEEPSEEK = os.getenv('IS_DEEPSEEK', '0') == '1'
 IS_QWEN = os.getenv('IS_QWEN', '0') == '1'
 IS_OPENROUTER = os.getenv('IS_OPENROUTER', '0') == '1'
+IS_CHAT = os.getenv('IS_CHAT', '0') == '1'
 
-if IS_OPENROUTER:
+if IS_OPENROUTER or IS_CHAT:
     LLAMA3_SYSTEM_PRM = """"""
     LLAMA3_USER_PRM = """"""
     LLAMA3_USER_END = """"""
 elif IS_DEEPSEEK:
-    LLAMA3_SYSTEM_PRM = """<｜begin▁of▁sentence｜>"""
+    # LLAMA3_SYSTEM_PRM = """<｜begin▁of▁sentence｜>"""
+    LLAMA3_SYSTEM_PRM = """"""
     LLAMA3_USER_PRM = """<｜User｜>"""
     LLAMA3_USER_END = """<｜Assistant｜>"""
 elif IS_QWEN:
@@ -79,7 +81,7 @@ elif IS_QWEN:
     LLAMA3_USER_PRM = """<|im_start|>user\n"""
     LLAMA3_USER_END = """<|im_end|>\n<|im_start|>assistant\n"""
 else:
-    LLAMA3_SYSTEM_PRM = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+    LLAMA3_SYSTEM_PRM = """<|start_header_id|>system<|end_header_id|>
 
 Cutting Knowledge Date: December 2023
 Today Date: 26 Jul 2024
@@ -140,7 +142,7 @@ else:
         "passkey": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}There is an important info hidden inside a lot of irrelevant text. Find it and memorize them. I will quiz you about the important information there.\n\n{{context}}\n\n{{input}}{LLAMA3_USER_END}The pass key is ",
         "all_passkey": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}There is an important info hidden inside a lot of irrelevant text. Find it and memorize them. I will quiz you about the important information there.\n\n{{context}}\n\n{{input}}{LLAMA3_USER_END}",
         "number_string": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}There is an important info hidden inside a lot of irrelevant text. Find it. I will quiz you about the important information there.\n\n{{context}}\n\n{{input}}{LLAMA3_USER_END}The sequence of digits mentioned in the text is ",
-        "kv_retrieval": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Extract the value corresponding to the specified key {{key}} in the JSON object below.\n\n{{context}}\n\n{{input}}\nAnswer only value.{LLAMA3_USER_END}", 
+        "kv_retrieval": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Extract the value corresponding to the specified key {{key}} in the JSON object below.\n\n{{context}}\n\n{{input}}\n\n(Hint: Answer only value. Do not answer anything else except the value of given key.){LLAMA3_USER_END}", 
         "longbook_qa_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Read the book below and answer a question.\n\nQuestion: {{question}}\n\nNow, I will provide the book content.\n\n=======\n\n{{context}}\n\n=======\n\nQuestion: {{question}}\n\nPlease answer as short as possible.{LLAMA3_USER_END}The answer is:", 
         "longbook_qa_eng_question_first": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Read the book below and answer the question.\n\nQuestion: {{question}}\n\n{{context}}\n\nQuestion: {{question}}\n\nPlease answer as short as possible.{LLAMA3_USER_END}The answer is:", 
         "longbook_choice_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Read the book and answer the question.\n\n{{context}}\n\nQuestion: {{question}}\n\nOnly one of the following options is correct, tell me the answer using one single letter (A, B, C, or D). Don't say anything else.\nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}{LLAMA3_USER_END}",
@@ -152,6 +154,8 @@ else:
         "code_debug": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}There is ONLY ONE function in the large project that is deliberately made to include an obvious error. Please find the function that contains the most obvious errors. I will give you four options to narrow your scope. You can inspect the options and think. Eventually, tell me the answer using one single letter (A, B, C, or D).\n\n{{context}}\n\nWhich funtion has deliberate error?\nA. {{OPTION_A}}\nB. {{OPTION_B}}\nC. {{OPTION_C}}\nD. {{OPTION_D}}\n\nGive me your answer for the function that has the deliberate and obvious error in A, B, C, or D. Your answer MUST be chosen from one of the four options without any explanation. If you cannot determine answers accurately, you also MUST provide the answer you think is most likely. Absolutely do not say you do not know or you need more information.{LLAMA3_USER_END}", 
         "longdialogue_qa_eng": f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}Below is a dialogue script where one random occurrence of a character name is replaced with \"$$MASK$$\", and you should try to guess who that character is.\n\nThe dialogue:\n\n---\n\n{{context}}\n\n---\n\nEnd of dialogue.\n\nWhich character is most likely \"$$MASK$$\"? Just say the name used by the scriptwriter (before the colon marks) of one single character and nothing else.{LLAMA3_USER_END}"
     }
+    if IS_CHAT:
+        llama3_templates['passkey'] = f"{LLAMA3_SYSTEM_PRM}{LLAMA3_USER_PRM}There is an important info hidden inside a lot of irrelevant text. Find it and memorize them. I will quiz you about the important information there.\n\n{{context}}\n\n{{input}}\n\n(Instruction: You have to answer only the passkey. Do not answer anything else.)\n\n{LLAMA3_USER_END}"
 
 EXAONE3_SYSTEM_PRM = """[BOS][|system|][|endofturn|]\n"""
 EXAONE3_USER_PRM = """[|user|]\n"""
