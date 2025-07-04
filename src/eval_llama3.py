@@ -1,7 +1,9 @@
 import json
 import os
 from pathlib import Path
+import queue
 import time
+import traceback
 from typing import List, Tuple, Any
 
 import torch
@@ -284,6 +286,7 @@ def get_pred(
     max_tokens: int,
     verbose: bool = False,
     reqiure_truncate: bool = True,
+    print_output: bool = True,
 ) -> str:
     """
     Truncate down to 128k then make inference.
@@ -312,7 +315,8 @@ def get_pred(
     output = output.replace('<eos>', '')
     output = output.replace('<end_of_turn>', '')
     output = output.replace('[|endofturn|]', '')
-    print("Chunked generation:", output.replace('\n', '\\n'))
+    if print_output:
+        print("Chunked generation:", output.replace('\n', '\\n'))
     return output, len_after
 
 
@@ -405,26 +409,124 @@ if __name__ == "__main__":
     t = threading.Thread(target=thread_main, daemon=True)
     t.start()
     
-    for i in range(args.start_idx, args.stop_idx):
-        eg = examples[i]
-        print(f"====== Example {i} ======")
-        while len(input_texts) <= i:
-            time.sleep(0.001)
-        input_text = input_texts[i]
-        pred, len_after = get_pred(
-            model, tok, input_text,
-            max_tokens=max_tokens,
-            verbose=args.verbose,
-            reqiure_truncate=False,
-        )
-        if args.verbose:
-            print(pred)
-        preds.append(
-            {
-                "id": i,
-                "prediction": pred,
-                "ground_truth": get_answer(eg, data_name),
-                "context_length": len_after,
-            }
-        )
-        dump_jsonl(preds, output_path)
+    pool_size = int(os.getenv('JOBS', '1'))
+    
+    if pool_size == 1:
+        for i in range(args.start_idx, args.stop_idx):
+            eg = examples[i]
+            print(f"====== Example {i} ======")
+            while len(input_texts) <= i:
+                time.sleep(0.001)
+            input_text = input_texts[i]
+            pred, len_after = get_pred(
+                model, tok, input_text,
+                max_tokens=max_tokens,
+                verbose=args.verbose,
+                reqiure_truncate=False,
+            )
+            if args.verbose:
+                print(pred)
+            preds.append(
+                {
+                    "id": i,
+                    "prediction": pred,
+                    "ground_truth": get_answer(eg, data_name),
+                    "context_length": len_after,
+                }
+            )
+            dump_jsonl(preds, output_path)
+    else:    
+        lock = threading.Lock()
+        job_queue = queue.Queue(maxsize=pool_size * 2)
+        result_queue = queue.Queue()
+        def pool_main():
+            while True:
+                job = job_queue.get()
+                if job is None:
+                    return
+
+                try:
+                    eg = examples[job]
+                    while len(input_texts) <= job:
+                        time.sleep(0.001)
+                    input_text = input_texts[job]
+                    print(f'[{threading.current_thread().native_id}] Send example {job}.')
+                    pred, len_after = get_pred(
+                        model, tok, input_text,
+                        max_tokens=max_tokens,
+                        verbose=args.verbose,
+                        reqiure_truncate=False,
+                        print_output=False,
+                    )
+                    pred_to_print = pred.replace('\n', '\\n')
+                    print(f'[{threading.current_thread().native_id}] Generated example {job}: {pred_to_print}')
+                    if args.verbose:
+                        print(pred)
+                    result = {
+                        "id": i,
+                        "prediction": pred,
+                        "ground_truth": get_answer(eg, data_name),
+                        "context_length": len_after,
+                    }
+                    result_queue.put((job, result))
+                except Exception as ex:
+                    traceback.print_exc()
+                
+        thread_pool = [threading.Thread(target=pool_main, daemon=True) for i in range(pool_size)]
+        for t in thread_pool:
+            t.start()
+        
+        for i in range(args.start_idx, args.stop_idx):
+            # eg = examples[i]
+            # print(f"====== Example {i} ======")
+            # while len(input_texts) <= i:
+            #     time.sleep(0.001)
+            # input_text = input_texts[i]
+            # pred, len_after = get_pred(
+            #     model, tok, input_text,
+            #     max_tokens=max_tokens,
+            #     verbose=args.verbose,
+            #     reqiure_truncate=False,
+            # )
+            # if args.verbose:
+            #     print(pred)
+            # preds.append(
+            #     {
+            #         "id": i,
+            #         "prediction": pred,
+            #         "ground_truth": get_answer(eg, data_name),
+            #         "context_length": len_after,
+            #     }
+            # )
+            # dump_jsonl(preds, output_path)
+            
+            if not job_queue.full():
+                print('enqueu', i)
+                job_queue.put(i)
+            else:
+                print('fdfasdf', flush=True)
+                max_get = pool_size
+                while not result_queue.empty():
+                    print('asdf', flush=True)
+                    max_get -= 1
+                    if max_get < 0: break
+                    print('asdf4', flush=True)
+                    job_id, result = result_queue.get(i)
+                    print('asdf3', flush=True)
+                    preds.append(result)
+                    print('asdf1', flush=True)
+                    dump_jsonl(preds, output_path)
+
+        print('asdf', flush=True)
+        while not result_queue.empty():
+            print('asdf4', flush=True)
+            job_id, result = result_queue.get(i)
+            print('asdf3', flush=True)
+            preds.append(result)
+            print('asdf1', flush=True)
+            dump_jsonl(preds, output_path)
+        
+        for i in range(pool_size):
+            job_queue.put(None)
+        for t in thread_pool:
+            t.join()
